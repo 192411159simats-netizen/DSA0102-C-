@@ -1,73 +1,73 @@
-
 #include <iostream>
 #include <string>
 using namespace std;
 
-class Staff {
+class Bill {
 protected:
-    string name;
-    int id;
-    double basic;
+    string patient;
 
 public:
-    Staff(string n, int i, double b)
-        : name(n), id(i), basic(b) {}
+    Bill(string p) : patient(p) {}
+    virtual ~Bill() = default;
 
-    virtual double pay() const = 0;
+    virtual double total() const = 0;
+    virtual string type() const { return "Bill"; }
 
-    virtual void display() const {
-        cout << name << " " << id << " " << pay() << endl;
-    }
-
-    virtual ~Staff() {}
-};
-
-class Professor : public Staff {
-    double research;
-
-public:
-    Professor(string n, int i, double b, double r)
-        : Staff(n, i, b), research(r) {}
-
-    double pay() const override {
-        return basic + basic * 0.42 + research;
+    void print() const {
+        cout << type() << " " << patient << ": " << total() << '\n';
     }
 };
 
-class LabAssistant : public Staff {
-public:
-    LabAssistant(string n, int i, double b)
-        : Staff(n, i, b) {}
+class OutPatient : public Bill {
+    double consultation, tests;
 
-    double pay() const override {
-        return basic + basic * 0.42;
+public:
+    OutPatient(string p, double c, double t)
+        : Bill(p), consultation(c), tests(t) {}
+
+    double total() const override {
+        return consultation + tests;
+    }
+
+    string type() const override {
+        return "OP";
     }
 };
 
-class GuestFaculty : public Staff {
-    double hours, rate;
+class InPatient : public Bill {
+    int days;
+    double perDay, surgery;
 
 public:
-    GuestFaculty(string n, int i, double h, double r)
-        : Staff(n, i, 0), hours(h), rate(r) {}
+    InPatient(string p, int d, double rate, double s)
+        : Bill(p), days(d), perDay(rate), surgery(s) {}
 
-    double pay() const override {
-        return hours * rate;
+    double total() const override {
+        return days * perDay + surgery;
+    }
+
+    string type() const override {
+        return "IP";
     }
 };
 
 int main() {
-    Staff *s[3];
+    Bill* bills[] = {
+        new OutPatient("Ravi", 500, 1200),
+        new InPatient("Meena", 3, 2500, 40000)
+    };
 
-    s[0] = new Professor("Arun", 101, 30000, 5000);
-    s[1] = new LabAssistant("Kumar", 102, 20000);
-    s[2] = new GuestFaculty("Ravi", 103, 20, 500);
+    double sum = 0;
 
-    for (int i = 0; i < 3; i++)
-        s[i]->display();
+    for (Bill* b : bills) {
+        b->print();
+        sum += b->total();
+    }
 
-    for (int i = 0; i < 3; i++)
-        delete s[i];
+    cout << "Total " << sum << '\n';
+
+    for (Bill* b : bills)
+        delete b;
 
     return 0;
 }
