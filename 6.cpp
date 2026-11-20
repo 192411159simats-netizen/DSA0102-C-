@@ -1,148 +1,85 @@
 
 #include <iostream>
-#include <string>
+#include <cmath>
 using namespace std;
 
-// Abstract Base Class
-class Vehicle {
-protected:
-    string regNo;
-    double rate;
-    bool rented = false;
+class Complex {
+    double real, imag;
 
 public:
-    Vehicle(string r, double d) : regNo(r), rate(d) {}
+    Complex() : real(0), imag(0) {}
 
-    virtual double charge(int days) const = 0;
+    Complex(double r) : real(r), imag(0) {}
 
-    void rent(int days) {
-        if (!rented) {
-            rented = true;
-            cout << regNo << " Rental Amount: "
-                 << charge(days) << endl;
-        }
+    Complex(double r, double i) : real(r), imag(i) {}
+
+    Complex operator+(Complex c) {
+        return Complex(real + c.real, imag + c.imag);
+    }
+
+    Complex operator-(Complex c) {
+        return Complex(real - c.real, imag - c.imag);
+    }
+
+    Complex operator*(Complex c) {
+        return Complex(real*c.real - imag*c.imag,
+                       real*c.imag + imag*c.real);
+    }
+
+    Complex operator/(Complex c) {
+        double d = c.real*c.real + c.imag*c.imag;
+
+        if (d == 0)
+            throw runtime_error("Division by zero");
+
+        return Complex((real*c.real + imag*c.imag)/d,
+                       (imag*c.real - real*c.imag)/d);
+    }
+
+    bool operator==(Complex c) {
+        return real == c.real && imag == c.imag;
+    }
+
+    double magnitude() {
+        return sqrt(real*real + imag*imag);
+    }
+
+    friend ostream& operator<<(ostream& out, Complex c) {
+        out << c.real;
+
+        if (c.imag >= 0)
+            out << " + " << c.imag << "j";
         else
-            cout << "Already Rented" << endl;
-    }
+            out << " - " << -c.imag << "j";
 
-    void returnVehicle(int lateDays) {
-        if (rented) {
-            cout << regNo << " Late Charge: "
-                 << lateDays * rate * 1.5 << endl;
-            rented = false;
-        }
-        else
-            cout << "Vehicle Not Rented" << endl;
-    }
-
-    virtual void display() const {
-        cout << "Registration: " << regNo
-             << " Daily Rate: " << rate << endl;
-    }
-
-    virtual ~Vehicle() {}
-};
-
-// Bicycle
-class Bicycle : public Vehicle {
-public:
-    Bicycle(string r, double d) : Vehicle(r, d) {}
-
-    double charge(int days) const override {
-        return rate * days;
-    }
-};
-
-// Two Wheeler
-class TwoWheeler : public Vehicle {
-    double fuel;
-
-public:
-    TwoWheeler(string r, double d, double f)
-        : Vehicle(r, d), fuel(f) {}
-
-    double charge(int days) const override {
-        return rate * days + fuel * 10;
-    }
-};
-
-// Car
-class Car : public Vehicle {
-    int seats;
-
-public:
-    Car(string r, double d, int s)
-        : Vehicle(r, d), seats(s) {}
-
-    double charge(int days) const override {
-        return rate * days;
-    }
-
-    void display() const override {
-        Vehicle::display();
-        cout << "Seats: " << seats << endl;
-    }
-};
-
-// Electric Car
-class ElectricCar : public Vehicle {
-    double battery, units;
-
-public:
-    ElectricCar(string r, double d, double b, double u)
-        : Vehicle(r, d), battery(b), units(u) {}
-
-    double charge(int days) const override {
-        return rate * days + units * 8;
-    }
-
-    void display() const override {
-        Vehicle::display();
-        cout << "Battery: " << battery << " kWh" << endl;
-    }
-};
-
-// New Vehicle Type: Electric Bus
-class ElectricBus : public Vehicle {
-    int seats;
-    double units;
-
-public:
-    ElectricBus(string r, double d, int s, double u)
-        : Vehicle(r, d), seats(s), units(u) {}
-
-    double charge(int days) const override {
-        return rate * days + units * 8;
-    }
-
-    void display() const override {
-        Vehicle::display();
-        cout << "Bus Seats: " << seats << endl;
+        return out;
     }
 };
 
 int main() {
-    Vehicle *fleet[5];
+    try {
+        double R = 10, L = 0.1, C = 0.001, w = 100;
 
-    fleet[0] = new Bicycle("B101", 100);
-    fleet[1] = new TwoWheeler("T101", 200, 2);
-    fleet[2] = new Car("C101", 1000, 5);
-    fleet[3] = new ElectricCar("E101", 1500, 60, 10);
-    fleet[4] = new ElectricBus("EB101", 3000, 40, 20);
+        Complex resistor(R, 0);
+        Complex inductor(0, w * L);
+        Complex capacitor(0, -1 / (w * C));
 
-    cout << "VEHICLE RENTAL SYSTEM\n\n";
+        Complex series = resistor + inductor + capacitor;
 
-    for (int i = 0; i < 5; i++) {
-        fleet[i]->display();
-        fleet[i]->rent(2);
-        cout << endl;
+        cout << "Series Impedance: " << series << endl;
+        cout << "Magnitude: " << series.magnitude() << endl;
+
+        Complex parallel = (resistor * inductor) /
+                           (resistor + inductor);
+
+        cout << "Parallel Impedance: " << parallel << endl;
+        cout << "Magnitude: " << parallel.magnitude() << endl;
+
+        Complex a(10, 5), b(0, 0);
+        Complex result = a / b;
     }
-
-    cout << "RETURN VEHICLES\n\n";
-
-    for (int i = 0; i < 5; i++) {
-        fleet[i]->returnVehicle(1);
-        delete fleet[i];
+    catch (runtime_error &e) {
+        cout << "Error: " << e.what() << endl;
     }
 
     return 0;
